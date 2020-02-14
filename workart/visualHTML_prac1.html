@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+</head>
+<body>
+    <div class="container"> 
+        <div class="row pt-5">
+            <form action="" class="form">
+                <label>統計項目別：</label>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="dataType" value="職類別" id="radio-1">
+                    <label class="form-check-label" for="radio-1">
+                        職類別
+                    </label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="dataType" value="教育程度" id="radio-2" checked>
+                    <label class="form-check-label" for="radio-2">
+                        教育程度
+                    </label>
+                </div>
+            </form>
+        </div>
+        <div class="row pt-5">
+            <canvas id="myChart" class="col-sm-12"></canvas>
+        </div>
+    </div>
+  <!--<canvas id="myChart" width="400" height="400"></canvas>-->
+
+<script
+  src="https://code.jquery.com/jquery-3.4.1.min.js"
+  integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+  crossorigin="anonymous">
+</script>
+
+<script
+  src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.min.js">
+</script>
+
+<script>
+  $.getJSON("../data/chartData/107年各教育程度別初任人員每人每月經常性薪資─按大職類分.json",function(data){
+
+      var eduls = ['國中及以下','高中或高職','專科','大學','研究所'];
+      var avgSalary = [];
+
+      for(var i=1;i<=eduls.length;i++){
+          this['ary'+i] = data.map(function(item){
+              return item[eduls[i-1]+"-薪資"];
+          });
+          this['sum'+i] = 0;
+          this['count'+i] = 0;
+      }
+      
+      
+      for(var i=1;i<=eduls.length;i++){
+          for(var j=0;j<this['ary'+i].length;j++){
+              if (this['ary'+i][j] != '—' && this['ary'+i][j] != '…'){
+              this['sum'+i] = this['sum'+i] + parseInt(this['ary'+i][j],10);
+              this['count'+i] = this['count'+i] +1;
+              }
+          }
+          avgSalary[i-1] = parseFloat((this['sum'+i]/this['count'+i]).toFixed(2));
+      }
+
+      var colors = [
+        'rgba(255, 99, 132, 0.2)',
+        'rgba(54, 162, 235, 0.2)',
+        'rgba(255, 206, 86, 0.2)',
+        'rgba(75, 192, 192, 0.2)',
+        'rgba(153, 102, 255, 0.2)',
+        'rgba(255, 159, 64, 0.2)'
+      ];
+     
+      var dataset = [
+      {
+          label: "平均薪資",
+          data: avgSalary,
+          backgroundColor: colors.slice(1,5),
+          borderColor: "#ff0000",
+          hoverBackgroundColor: "#AAAAAA",
+          borderWidth: 1,
+          hoverBorderWidth: 3
+      }];
+
+      var data = {
+                labels: eduls,
+                datasets: dataset
+      };
+
+      var option = {
+              scales: {
+                  yAxes: [{
+                      ticks: {
+                          beginAtZero: true,
+                          max: 50000//拉高圖表上方
+                      }
+                  }],
+                  xAxes: [{
+                      gridLines: {
+                          display: false
+                    }
+                  }]
+              }
+      };
+
+      var ctx = $("#myChart"); 
+      var myChart = new Chart(ctx, {
+          type: "bar",
+          data: data,
+          options: option
+      });
+
+      $("[name='dataType']").change(function(){
+          var filter = $("[name='dataType']:checked").val();
+          var avgSalary = [];
+
+          switch (filter){
+              case "職類別":
+                  filenm = "../data/chartData/107年各職類別初任人員每人每月經常性薪資－按行業別分.json";
+                  var eduls = ['專業人員','技術員及助理專業人員','事務支援人員','服務及銷售工作人員','技藝_機械設備操作及組裝人員','基層技術工及勞力工'];
+                  break;
+              case "教育程度":
+                  filenm = "../data/chartData/107年各教育程度別初任人員每人每月經常性薪資─按大職類分.json";
+                  var eduls = ['國中及以下','高中或高職','專科','大學','研究所'];
+                  break;
+              default:
+                  break;
+          };
+
+          $.getJSON(filenm,function(data){
+              for(var i=1;i<=eduls.length;i++){
+                  this['ary'+i] = data.map(function(item){
+                      return item[eduls[i-1]+"-薪資"];
+                  });
+                  this['sum'+i] = 0;
+                  this['count'+i] = 0;
+              }
+
+              for(var i=1;i<=eduls.length;i++){
+                  for(var j=0;j<this['ary'+i].length;j++){
+                      if (this['ary'+i][j] != '—' && this['ary'+i][j] != '…'){
+                          this['sum'+i] = this['sum'+i] + parseInt(this['ary'+i][j],10);
+                          this['count'+i] = this['count'+i] +1;
+                      }
+                  }
+                  avgSalary[i-1] = parseFloat((this['sum'+i]/this['count'+i]).toFixed(2));
+              }
+              var dataset = [
+              {
+                  label: "平均薪資",
+                  data: avgSalary,
+                  backgroundColor: colors.slice(1,5),
+                  borderColor: "#ff0000",
+                  hoverBackgroundColor: "#AAAAAA",
+                  borderWidth: 1,
+                  hoverBorderWidth: 3
+              }];
+
+              var data = {
+                        labels: eduls,
+                        datasets: dataset
+              };
+              myChart.data = data;
+              myChart.update();      
+          }); 
+      });
+  }); 
+</script>
+
+</body>
+</html>
